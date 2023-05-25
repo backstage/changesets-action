@@ -265,7 +265,7 @@ ${changelogEntries
 
   await fs.writeFile(changelogPath, changelogBody);
 
-  const prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/master/${changelogPath}) for more information.`;
+  const prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/${versionBranch}/${changelogPath}) for more information.`;
 
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
 
