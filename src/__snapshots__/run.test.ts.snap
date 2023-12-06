@@ -4,7 +4,7 @@ exports[`version creates simple PR 1`] = `
 Array [
   Object {
     "base": "some-branch",
-    "body": "See [docs/releases/v[object Object]-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/v[object Object]-changelog.md) for more information.",
+    "body": "See [docs/releases/vundefined-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/vundefined-changelog.md) for more information.",
     "head": "changeset-release/some-branch",
     "owner": "changesets",
     "repo": "action",
@@ -17,7 +17,7 @@ exports[`version doesn't include ignored package that got a dependency update in
 Array [
   Object {
     "base": "some-branch",
-    "body": "See [docs/releases/v[object Object]-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/v[object Object]-changelog.md) for more information.",
+    "body": "See [docs/releases/vundefined-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/vundefined-changelog.md) for more information.",
     "head": "changeset-release/some-branch",
     "owner": "changesets",
     "repo": "action",
@@ -30,7 +30,7 @@ exports[`version only includes bumped packages in the PR body 1`] = `
 Array [
   Object {
     "base": "some-branch",
-    "body": "See [docs/releases/v[object Object]-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/v[object Object]-changelog.md) for more information.",
+    "body": "See [docs/releases/vundefined-changelog.md](https://github.com/backstage/backstage/blob/master/docs/releases/vundefined-changelog.md) for more information.",
     "head": "changeset-release/some-branch",
     "owner": "changesets",
     "repo": "action",
