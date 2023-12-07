@@ -28,6 +28,12 @@ inputs:
     description: "A boolean value to indicate whether to create Github releases after `publish` or not"
     required: false
     default: true
+  releaseVersion:
+    description: Use this if you want to provide a static release version
+    required: false
+  changelogPath:
+    description: The path of where the changelog file will be created
+    required: false
 outputs:
   published:
     description: A boolean value to indicate whether a publishing is happened or not

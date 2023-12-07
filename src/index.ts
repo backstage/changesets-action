@@ -102,6 +102,8 @@ const getOptionalInput = (name: string) => core.getInput(name) || undefined;
         githubToken,
         prTitle: getOptionalInput("title"),
         commitMessage: getOptionalInput("commit"),
+        releaseVersion: getOptionalInput("releaseVersion"),
+        changelogPath: getOptionalInput("changelogPath"),
         hasPublishScript,
       });
 

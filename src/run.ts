@@ -175,6 +175,8 @@ type VersionOptions = {
   prTitle?: string;
   commitMessage?: string;
   hasPublishScript?: boolean;
+  changelogPath?: string;
+  releaseVersion?: string;
 };
 
 type RunVersionResult = {
@@ -185,9 +187,11 @@ export async function runVersion({
   script,
   githubToken,
   cwd = process.cwd(),
+  releaseVersion,
   prTitle = "Version Packages",
   commitMessage = "Version Packages",
   hasPublishScript = false,
+  changelogPath = "docs/releases",
 }: VersionOptions): Promise<RunVersionResult> {
   let repo = `${github.context.repo.owner}/${github.context.repo.repo}`;
   let branch = github.context.ref.replace("refs/heads/", "");
@@ -219,9 +223,10 @@ export async function runVersion({
   });
   let changedPackages = await getChangedPackages(cwd, versionsByDirectory);
 
-  const { version: releaseVersion } = await fs.readJson(
+  const { version: versionFromPackageJson } = await fs.readJson(
     path.resolve(cwd, "package.json")
   );
+  const toUseReleaseVersion = releaseVersion || versionFromPackageJson;
 
   const changelogEntries = await Promise.all(
     changedPackages.map(async (pkg) => {
@@ -241,9 +246,9 @@ export async function runVersion({
     })
   );
   let changelogBody = `
-# Release v${releaseVersion}
+# Release v${toUseReleaseVersion}
 
-Upgrade Helper: [https://backstage.github.io/upgrade-helper/?to=${releaseVersion}](https://backstage.github.io/upgrade-helper/?to=${releaseVersion})
+Upgrade Helper: [https://backstage.github.io/upgrade-helper/?to=${toUseReleaseVersion}](https://backstage.github.io/upgrade-helper/?to=${toUseReleaseVersion})
 
 ${changelogEntries
   .filter((x) => x)
@@ -252,7 +257,8 @@ ${changelogEntries
   .join("\n")}
 `;
 
-  const changelogPath = `docs/releases/v${releaseVersion}-changelog.md`;
+  const file = `v${releaseVersion}-changelog.md`;
+  const fullChangelogPath = `${changelogPath}/${file}`;
 
   try {
     const prettier = require(resolveFrom(cwd, "prettier"));
@@ -263,9 +269,9 @@ ${changelogEntries
     });
   } catch {}
 
-  await fs.writeFile(changelogPath, changelogBody);
+  await fs.writeFile(fullChangelogPath, changelogBody);
 
-  const prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/master/${changelogPath}) for more information.`;
+  const prBody = `See [${fullChangelogPath}](https://github.com/backstage/backstage/blob/master/${fullChangelogPath}) for more information.`;
 
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
 
