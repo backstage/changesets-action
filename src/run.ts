@@ -193,7 +193,7 @@ export async function runVersion({
 }: VersionOptions): Promise<RunVersionResult> {
   let repo = `${github.context.repo.owner}/${github.context.repo.repo}`;
   let branch = github.context.ref.replace("refs/heads/", "");
-  let versionBranch = customVersionBranch ?? `changeset-release/${branch}`;
+  let versionBranch = customVersionBranch || `changeset-release/${branch}`;
   let octokit = github.getOctokit(githubToken);
   let { preState } = await readChangesetState(cwd);
 
