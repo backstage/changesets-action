@@ -1,5 +1,11 @@
 # @changesets/action
 
+## 2.3.0
+
+### Minor Changes
+
+- [`2a79ca0`](https://github.com/changesets/action/commit/2a79ca04e4fd78d7ac9e95b9333eb0e7253095b4) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Added ability to skip root changelog update
+
 ## 2.2.0
 
 ### Minor Changes
