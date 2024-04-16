@@ -1,5 +1,11 @@
 # @changesets/action
 
+## 2.3.1
+
+### Patch Changes
+
+- [`9bc8c0d`](https://github.com/changesets/action/commit/9bc8c0dc43fa802a871992dd327c32fc56b8efa2) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Fixing small formatting error
+
 ## 2.3.0
 
 ### Minor Changes
