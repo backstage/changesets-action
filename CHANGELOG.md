@@ -1,5 +1,11 @@
 # @changesets/action
 
+## 2.2.0
+
+### Minor Changes
+
+- [`c134b32`](https://github.com/changesets/action/commit/c134b327481048b02cc227a15cffc8dacd6c0b63) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Added new `versionBranch` options
+
 ## 2.1.0
 
 ### Minor Changes
