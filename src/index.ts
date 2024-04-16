@@ -100,6 +100,7 @@ const getOptionalInput = (name: string) => core.getInput(name) || undefined;
       const { pullRequestNumber } = await runVersion({
         script: getOptionalInput("version"),
         githubToken,
+        customVersionBranch: getOptionalInput("versionBranch"),
         prTitle: getOptionalInput("title"),
         commitMessage: getOptionalInput("commit"),
         hasPublishScript,
