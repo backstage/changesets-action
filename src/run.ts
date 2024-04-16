@@ -277,7 +277,7 @@ ${changelogEntries
       .filter((x) => x)
       .sort(sortTheThings)
       .map((x) => x.content)
-      .join("\n")}}`;
+      .join("\n")}`;
   }
 
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
