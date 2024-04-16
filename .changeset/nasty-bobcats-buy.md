@@ -1,5 +1,5 @@
 ---
-"@changesets/action": patch
+"@changesets/action": minor
 ---
 
 Added new `versionBranch` options
