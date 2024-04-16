@@ -273,7 +273,7 @@ ${changelogEntries
 
     prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/master/${changelogPath}) for more information.`;
   } else {
-    prBody = `# Releases\n ${changelogEntries
+    prBody = `# Releases\n\n${changelogEntries
       .filter((x) => x)
       .sort(sortTheThings)
       .map((x) => x.content)
