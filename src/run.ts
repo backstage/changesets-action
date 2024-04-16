@@ -176,6 +176,7 @@ type VersionOptions = {
   commitMessage?: string;
   hasPublishScript?: boolean;
   customVersionBranch?: string;
+  skipRootChangelogUpdate: boolean;
 };
 
 type RunVersionResult = {
@@ -189,6 +190,7 @@ export async function runVersion({
   prTitle = "Version Packages",
   commitMessage = "Version Packages",
   customVersionBranch,
+  skipRootChangelogUpdate = false,
   hasPublishScript = false,
 }: VersionOptions): Promise<RunVersionResult> {
   let repo = `${github.context.repo.owner}/${github.context.repo.repo}`;
@@ -242,7 +244,11 @@ export async function runVersion({
       };
     })
   );
-  let changelogBody = `
+
+  let prBody: string;
+
+  if (!skipRootChangelogUpdate) {
+    let changelogBody = `
 # Release v${releaseVersion}
 
 Upgrade Helper: [https://backstage.github.io/upgrade-helper/?to=${releaseVersion}](https://backstage.github.io/upgrade-helper/?to=${releaseVersion})
@@ -253,21 +259,26 @@ ${changelogEntries
   .map((x) => x.content)
   .join("\n")}
 `;
+    const changelogPath = `docs/releases/v${releaseVersion}-changelog.md`;
 
-  const changelogPath = `docs/releases/v${releaseVersion}-changelog.md`;
+    try {
+      const prettier = require(resolveFrom(cwd, "prettier"));
+      const prettierConfig = await prettier.resolveConfig(cwd);
+      changelogBody = prettier.format(changelogBody, {
+        ...prettierConfig,
+        parser: "markdown",
+      });
+    } catch {}
+    await fs.writeFile(changelogPath, changelogBody);
 
-  try {
-    const prettier = require(resolveFrom(cwd, "prettier"));
-    const prettierConfig = await prettier.resolveConfig(cwd);
-    changelogBody = prettier.format(changelogBody, {
-      ...prettierConfig,
-      parser: "markdown",
-    });
-  } catch {}
-
-  await fs.writeFile(changelogPath, changelogBody);
-
-  const prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/master/${changelogPath}) for more information.`;
+    prBody = `See [${changelogPath}](https://github.com/backstage/backstage/blob/master/${changelogPath}) for more information.`;
+  } else {
+    prBody = `# Releases\n\n${changelogEntries
+      .filter((x) => x)
+      .sort(sortTheThings)
+      .map((x) => x.content)
+      .join("\n")}}`;
+  }
 
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
 

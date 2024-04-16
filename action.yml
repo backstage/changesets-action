@@ -27,6 +27,10 @@ inputs:
     description: Sets up the git user for commits as `"github-actions[bot]"`. Default to `true`
     required: false
     default: true
+  skipRootChangelogUpdate:
+    description: Ignore updating the `docs/releases/v0.0.0.md` files in the root
+    required: false
+    default: false
   createGithubReleases:
     description: "A boolean value to indicate whether to create Github releases after `publish` or not"
     required: false

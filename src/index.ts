@@ -103,6 +103,9 @@ const getOptionalInput = (name: string) => core.getInput(name) || undefined;
         customVersionBranch: getOptionalInput("versionBranch"),
         prTitle: getOptionalInput("title"),
         commitMessage: getOptionalInput("commit"),
+        skipRootChangelogUpdate: core.getBooleanInput(
+          "skipRootChangelogUpdate"
+        ),
         hasPublishScript,
       });
 
