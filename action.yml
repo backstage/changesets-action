@@ -14,7 +14,7 @@ inputs:
     description: Sets the cwd for the node process. Default to `process.cwd()`
     required: false
   versionBranch:
-    description: "An optional override for the branch to use for versioning. Defaults to `changeset-release/master`"
+    description: "An optional override for the branch to use for versioning. Defaults to `changeset-release/MAIN_BRANCH`"
     required: false
   commit:
     description: |
