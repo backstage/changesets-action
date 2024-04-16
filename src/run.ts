@@ -176,6 +176,7 @@ type VersionOptions = {
   commitMessage?: string;
   hasPublishScript?: boolean;
   customVersionBranch?: string;
+  skipRootChangelogUpdate?: boolean;
 };
 
 type RunVersionResult = {
@@ -189,6 +190,7 @@ export async function runVersion({
   prTitle = "Version Packages",
   commitMessage = "Version Packages",
   customVersionBranch,
+  skipRootChangelogUpdate = false,
   hasPublishScript = false,
 }: VersionOptions): Promise<RunVersionResult> {
   let repo = `${github.context.repo.owner}/${github.context.repo.repo}`;
