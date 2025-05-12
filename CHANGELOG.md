@@ -1,5 +1,11 @@
 # @changesets/action
 
+## 2.3.2
+
+### Patch Changes
+
+- [`445ec20f03cdcc4d00d9bacf6d475189db588544`](https://github.com/changesets/action/commit/445ec20f03cdcc4d00d9bacf6d475189db588544) Thanks [@freben](https://github.com/freben)! - Pin CLI version
+
 ## 2.3.1
 
 ### Patch Changes
