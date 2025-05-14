@@ -1,5 +1,11 @@
 # @changesets/action
 
+## 2.3.3
+
+### Patch Changes
+
+- [`902ceac163f999187aeb1ebba02500a767f6efd0`](https://github.com/changesets/action/commit/902ceac163f999187aeb1ebba02500a767f6efd0) Thanks [@freben](https://github.com/freben)! - Bump to actually fixed CLI
+
 ## 2.3.2
 
 ### Patch Changes
