@@ -1,9 +1,13 @@
 name: Changesets
 description: A GitHub action to automate releases with Changesets
 runs:
-  using: "node12"
+  using: "node24"
   main: "dist/index.js"
 inputs:
+  github-token:
+    description: "The GitHub token to use for authentication. Defaults to the GitHub-provided token."
+    required: false
+    default: ${{ github.token }}
   publish:
     description: "The command to use to build and publish packages"
     required: false
@@ -12,9 +16,6 @@ inputs:
     required: false
   cwd:
     description: Sets the cwd for the node process. Default to `process.cwd()`
-    required: false
-  versionBranch:
-    description: "An optional override for the branch to use for versioning. Defaults to `changeset-release/MAIN_BRANCH`"
     required: false
   commit:
     description: |
@@ -27,14 +28,27 @@ inputs:
     description: Sets up the git user for commits as `"github-actions[bot]"`. Default to `true`
     required: false
     default: true
-  skipRootChangelogUpdate:
-    description: Ignore updating the `docs/releases/v0.0.0.md` files in the root
-    required: false
-    default: false
   createGithubReleases:
     description: "A boolean value to indicate whether to create Github releases after `publish` or not"
     required: false
     default: true
+  commitMode:
+    description: >
+      An enum to specify the commit mode. Use "git-cli" to push changes using the Git CLI,
+      or "github-api" to push changes via the GitHub API. When using "github-api",
+      all commits and tags are signed using GitHub's GPG key and attributed to the user
+      or app who owns the GITHUB_TOKEN.
+    required: false
+    default: "git-cli"
+  branch:
+    description: Sets the branch in which the action will run. Default to `github.ref_name` if not provided
+    required: false
+  versionBranch:
+    description: Sets the head branch used for the version pull request. Defaults to `changeset-release/BASE_BRANCH`
+    required: false
+  prDraft:
+    description: 'Controls draft PR behavior. Use "create" to create new version PRs as draft, or "always" to also convert existing version PRs back to draft when updating them.'
+    required: false
 outputs:
   published:
     description: A boolean value to indicate whether a publishing is happened or not

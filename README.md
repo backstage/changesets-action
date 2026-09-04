@@ -1,6 +1,22 @@
 # Changesets Release Action
 
-This action for [Changesets](https://github.com/atlassian/changesets) creates a pull request with all of the package versions updated and changelogs updated and when there are new changesets on master, the PR will be updated. When you're ready, you can merge the pull request and you can either publish the packages to npm manually or setup the action to do it for you.
+> [!IMPORTANT]
+> This is a narrowly scoped Backstage fork of
+> [`changesets/action`](https://github.com/changesets/action), used only by
+> [`backstage/community-plugins`](https://github.com/backstage/community-plugins).
+> Its sole intended behavior change is the `versionBranch` input, which lets
+> each independently released community-plugins workspace maintain its own
+> stable version pull request branch. Upstream does not currently provide a way
+> to customize that head branch. All other behavior should stay aligned with
+> the upstream v1 action; `backstage/backstage` uses the official action
+> directly.
+
+This action for [Changesets](https://github.com/changesets/changesets) creates a pull request with all of the package versions updated and changelogs updated and when there are new changesets on [your configured `baseBranch`](https://github.com/changesets/changesets/blob/main/docs/config-file-options.md#basebranch-git-branch-name), the PR will be updated. When you're ready, you can merge the pull request and you can either publish the packages to npm manually or setup the action to do it for you.
+
+There are also sub-actions hosted in this repository. Check out their respective READMEs for more details:
+
+- [pr-status](./pr-status/README.md): Generate changeset status in PRs.
+- [pr-comment](./pr-comment/README.md): Comment on PRs.
 
 ## Usage
 
@@ -11,14 +27,18 @@ This action for [Changesets](https://github.com/atlassian/changesets) creates a 
 - commit - The commit message to use. Default to `Version Packages`
 - title - The pull request title. Default to `Version Packages`
 - setupGitUser - Sets up the git user for commits as `"github-actions[bot]"`. Default to `true`
+- createGithubReleases - A boolean value to indicate whether to create Github releases after `publish` or not. Default to `true`
+- commitMode - Specifies the commit mode. Use `"git-cli"` to push changes using the Git CLI, or `"github-api"` to push changes via the GitHub API. When using `"github-api"`, all commits and tags are GPG-signed and attributed to the user or app who owns the `GITHUB_TOKEN`. Default to `git-cli`.
 - cwd - Changes node's `process.cwd()` if the project is not located on the root. Default to `process.cwd()`
+- versionBranch - Sets the head branch used for the version pull request. Defaults to `changeset-release/BASE_BRANCH`
+- prDraft - Controls draft PR behavior. Use `create` to create new version PRs as draft, or `always` to also convert existing version PRs back to draft when updating them. By default, version PRs are not forced into draft mode.
 
 ### Outputs
 
-- published - A boolean value to indicate whether a publishing is happened or not
+- published - A boolean value to indicate whether a publishing has happened or not
 - publishedPackages - A JSON array to present the published packages. The format is `[{"name": "@xx/xx", "version": "1.2.0"}, {"name": "@xx/xy", "version": "0.8.9"}]`
 
-### Example workflow:
+### Example workflow
 
 #### Without Publishing
 
@@ -30,7 +50,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -40,23 +60,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-        with:
-          # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js 12.x
-        uses: actions/setup-node@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js 26
+        uses: actions/setup-node@v6
         with:
-          node-version: 12.x
+          node-version: 26
 
       - name: Install Dependencies
-        run: yarn
+        run: pnpm install --frozen-lockfile
 
       - name: Create Release Pull Request
-        uses: changesets/action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: changesets/action@v1
 ```
 
 #### With Publishing
@@ -69,7 +87,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -79,27 +97,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-        with:
-          # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js 12.x
-        uses: actions/setup-node@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js 26
+        uses: actions/setup-node@v6
         with:
-          node-version: 12.x
+          node-version: 26
 
       - name: Install Dependencies
-        run: yarn
+        run: pnpm install --frozen-lockfile
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v2
+        uses: changesets/action@v1
         with:
           # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          publish: yarn release
+          publish: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Send a Slack notification if a publish happens
@@ -110,7 +127,7 @@ jobs:
 
 By default the GitHub Action creates a `.npmrc` file with the following content:
 
-```
+```txt
 //registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}
 ```
 
@@ -121,7 +138,6 @@ For example, you can add a step before running the Changesets GitHub Action:
 - name: Creating .npmrc
   run: |
     cat << EOF > "$HOME/.npmrc"
-      email=my@email.com
       //registry.npmjs.org/:_authToken=$NPM_TOKEN
     EOF
   env:
@@ -130,7 +146,7 @@ For example, you can add a step before running the Changesets GitHub Action:
 
 #### Custom Publishing
 
-If you want to hook into when publishing should occur but have your own publishing functionality you can utilize the `hasChangesets` output.
+If you want to hook into when publishing should occur but have your own publishing functionality, you can utilize the `hasChangesets` output.
 
 Note that you might need to account for things already being published in your script because a commit without any new changesets can always land on your base branch after a successful publish. In such a case you need to figure out on your own how to skip over the actual publishing logic or handle errors gracefully as most package registries won't allow you to publish over already published version.
 
@@ -140,7 +156,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   release:
@@ -148,29 +164,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-        with:
-          # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js 12.x
-        uses: actions/setup-node@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js 26
+        uses: actions/setup-node@v6
         with:
-          node-version: 12.x
+          node-version: 26
 
       - name: Install Dependencies
-        run: yarn
+        run: pnpm install --frozen-lockfile
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: changesets/action@v1
 
       - name: Publish
         if: steps.changesets.outputs.hasChangesets == 'false'
         # You can do something when a publish should happen.
-        run: yarn publish
+        run: pnpm publish
 ```
 
 #### With version script
@@ -185,7 +199,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -195,25 +209,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js 12.x
-        uses: actions/setup-node@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js 26
+        uses: actions/setup-node@v6
         with:
-          node-version: 12.x
+          node-version: 26
 
       - name: Install Dependencies
-        run: yarn
+        run: pnpm install --frozen-lockfile
 
       - name: Create Release Pull Request
-        uses: changesets/action@v2
+        uses: changesets/action@v1
         with:
           # this expects you to have a npm script called version that runs some logic and then calls `changeset version`.
-          version: yarn version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version: pnpm version
 ```
 
 #### With Yarn 2 / Plug'n'Play
@@ -221,8 +234,8 @@ jobs:
 If you are using [Yarn Plug'n'Play](https://yarnpkg.com/features/pnp), you should use a custom `version` command so that the action can resolve the `changeset` CLI:
 
 ```yaml
-- uses: changesets/action@v2
+- uses: changesets/action@v1
   with:
     version: yarn changeset version
-    ...
+    # ...
 ```

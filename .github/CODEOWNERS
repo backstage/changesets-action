@@ -1,0 +1,5 @@
+/.github/workflows/** @Andarist @bluwy @emmatown
+/action.yml @Andarist @bluwy @emmatown
+/scripts/bump.ts @Andarist @bluwy @emmatown
+/scripts/release.ts @Andarist @bluwy @emmatown
+/scripts/release-pr.ts @Andarist @bluwy @emmatown
