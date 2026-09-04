@@ -1,5 +1,14 @@
 # @changesets/action
 
+## 3.0.0
+
+### Major Changes
+
+- Refresh the Backstage fork to upstream `changesets/action` v1.9.0 and require
+  Node.js 24 for the action runtime. The fork now retains only the custom
+  `versionBranch` input used by `backstage/community-plugins`; all other action
+  behavior follows upstream.
+
 ## 1.9.0
 
 ### Minor Changes

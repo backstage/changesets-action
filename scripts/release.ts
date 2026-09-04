@@ -27,7 +27,7 @@ process.chdir(path.join(import.meta.dirname, ".."));
 
   await exec("git", ["checkout", "--detach"]);
   await exec("git", ["add", "--force", "dist"]);
-  await exec("git", ["commit", "-m", tag]);
+  await exec("git", ["commit", "--allow-empty", "-m", tag]);
 
   await exec("changeset", ["tag"]);
 
