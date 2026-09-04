@@ -1,44 +1,193 @@
 # @changesets/action
 
-## 2.3.2
-
-### Patch Changes
-
-- [`445ec20f03cdcc4d00d9bacf6d475189db588544`](https://github.com/changesets/action/commit/445ec20f03cdcc4d00d9bacf6d475189db588544) Thanks [@freben](https://github.com/freben)! - Pin CLI version
-
-## 2.3.1
-
-### Patch Changes
-
-- [`9bc8c0d`](https://github.com/changesets/action/commit/9bc8c0dc43fa802a871992dd327c32fc56b8efa2) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Fixing small formatting error
-
-## 2.3.0
-
-### Minor Changes
-
-- [`2a79ca0`](https://github.com/changesets/action/commit/2a79ca04e4fd78d7ac9e95b9333eb0e7253095b4) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Added ability to skip root changelog update
-
-## 2.2.0
-
-### Minor Changes
-
-- [`c134b32`](https://github.com/changesets/action/commit/c134b327481048b02cc227a15cffc8dacd6c0b63) Thanks [@benjdlambert](https://github.com/benjdlambert)! - Added new `versionBranch` options
-
-## 2.1.0
-
-### Minor Changes
-
-- [`daab23b`](https://github.com/changesets/action/commit/daab23bbf569ca1e0fd1ddd405f6cdd01e9375dc) Thanks [@Rugvip](https://github.com/Rugvip)! - Format changelog with prettier if available.
-
-## 2.0.0
+## 3.0.0
 
 ### Major Changes
 
-- [`8a93cad`](https://github.com/changesets/action/commit/8a93cad842ebe5c14cadc7bfd5c54ff462739a05) Thanks [@Rugvip](https://github.com/Rugvip)! - Adapatations for backstage/backstage.
+- Refresh the Backstage fork to upstream `changesets/action` v1.9.0 and require
+  Node.js 24 for the action runtime. The fork now retains only the custom
+  `versionBranch` input used by `backstage/community-plugins`; all other action
+  behavior follows upstream.
+
+## 1.9.0
+
+### Minor Changes
+
+- [#636](https://github.com/changesets/action/pull/636) [`b072bcc`](https://github.com/changesets/action/commit/b072bccc4c664a373c42168eed9139dce1e003b1) Thanks [@bluwy](https://github.com/bluwy)! - Add a new `@changesets/action/pr-comment` sub-action to comment on PRs
+
+- [#625](https://github.com/changesets/action/pull/625) [`8795eee`](https://github.com/changesets/action/commit/8795eee5eee884e887d352ac673a515ffe35aaa6) Thanks [@bluwy](https://github.com/bluwy)! - Add a new `@changesets/action/pr-status` sub-action to generate the changeset status comment for PRs as an alternative to the [Changesets Bot](https://github.com/apps/changeset-bot).
+
+### Patch Changes
+
+- [#535](https://github.com/changesets/action/pull/535) [`34f64f6`](https://github.com/changesets/action/commit/34f64f6e2e1e47ddc183f174aa27c197aa47f520) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue with GitHub releases not being created for successfully published packages when _some_ packages failed to be published to the registry.
+
+- [#632](https://github.com/changesets/action/pull/632) [`1d54b9e`](https://github.com/changesets/action/commit/1d54b9e660e435237accbcae0b4581af3be641b4) Thanks [@bluwy](https://github.com/bluwy)! - Simplify internal implementation to get changelog entries for a package version
+
+- [#629](https://github.com/changesets/action/pull/629) [`e0c90aa`](https://github.com/changesets/action/commit/e0c90aa7fbd0cc26931a679c5abe9bbc0deb0b50) Thanks [@bluwy](https://github.com/bluwy)! - Fix custom version and publish command argument parsing
+
+- [#645](https://github.com/changesets/action/pull/645) [`f9585d9`](https://github.com/changesets/action/commit/f9585d966a9c7d2f668b97199990de6f885823cf) Thanks [@Andarist](https://github.com/Andarist)! - Improved force-push handling when using `commitMode: "github-api"` so updating an existing branch no longer temporarily resets the target branch to the base commit, avoiding cases where GitHub closes open pull requests during the update. This should remove a possibility of a GitHub state race that caused the force-pushed PRs not being reopened.
+
+## 1.8.0
+
+### Minor Changes
+
+- [#258](https://github.com/changesets/action/pull/258) [`f5dbf72`](https://github.com/changesets/action/commit/f5dbf72f96949cb0daf45152f0f63062df70e97d) Thanks [@tom-sherman](https://github.com/tom-sherman)! - Support draft version PR modes with a new `prDraft` input. Use `create` to create new version PRs as drafts, or `always` to also convert existing version PRs back to draft when updating them.
+
+### Patch Changes
+
+- [#502](https://github.com/changesets/action/pull/502) [`6002dbd`](https://github.com/changesets/action/commit/6002dbd987f49a3c0a134910d9c7bca975b79977) Thanks [@oshytiko](https://github.com/oshytiko)! - Fixed initial `.changeset` state being picked up, when `cwd` parameter is provided
+
+- [#536](https://github.com/changesets/action/pull/536) [`81b3f61`](https://github.com/changesets/action/commit/81b3f61ebffcb868f73e4c0b2682517149c834a2) Thanks [@radnan](https://github.com/radnan)! - Fixed `.changeset` state being picked for the version command when `cwd` parameter is provided
+
+## 1.7.0
+
+### Minor Changes
+
+- [#564](https://github.com/changesets/action/pull/564) [`935fe87`](https://github.com/changesets/action/commit/935fe876b0054dfc962ac86bcddf028460040d46) Thanks [@Andarist](https://github.com/Andarist)! - Automatically use the GitHub-provided token to allow most users to avoid explicit `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` configuration.
+
+### Patch Changes
+
+- [#545](https://github.com/changesets/action/pull/545) [`54220dd`](https://github.com/changesets/action/commit/54220dd92c06e7da112b139f95d8beb933e4cdde) Thanks [@ryanbas21](https://github.com/ryanbas21)! - The `.npmrc` generation now intelligently handles both traditional NPM token authentication and trusted publishing scenarios by only appending the auth token when `NPM_TOKEN` is defined. This prevents 'undefined' from being written to the registry configuration when using OIDC tokens from GitHub Actions trusted publishing.
+
+- [#563](https://github.com/changesets/action/pull/563) [`6af4a7e`](https://github.com/changesets/action/commit/6af4a7ec080d23ac6b304f69b67fd0aa92e089e7) Thanks [@Andarist](https://github.com/Andarist)! - Don't error on already committed symlinks and executables that stay untouched
+
+## 1.6.0
+
+### Minor Changes
+
+- [#558](https://github.com/changesets/action/pull/558) [`342005d`](https://github.com/changesets/action/commit/342005d41242bccd9dd9ae8d3679efce96af48ae) Thanks [@harsha-venugopal-ledn](https://github.com/harsha-venugopal-ledn)! - Upgrade from Node.js 20 to Node.js 24 LTS
+
+## 1.5.3
+
+### Patch Changes
+
+- [#477](https://github.com/changesets/action/pull/477) [`9d933dc`](https://github.com/changesets/action/commit/9d933dcd11c284ac49a835db884c3c1008b2b96f) Thanks [@Andarist](https://github.com/Andarist)! - Updated `@actions/*` and `@octokit/*` dependencies.
+
+- [#479](https://github.com/changesets/action/pull/479) [`cf373e4`](https://github.com/changesets/action/commit/cf373e45c90a0cc564cd2770de3e9a3a4cdd4603) Thanks [@Andarist](https://github.com/Andarist)! - Switched to `esbuild` for bundling the dist file. This led to 45% file size reduction.
+
+- [#488](https://github.com/changesets/action/pull/488) [`022692b`](https://github.com/changesets/action/commit/022692ba027b33bf46d4d41907a317fbf04461a7) Thanks [@s0](https://github.com/s0)! - Fix PRs sometimes not getting reopened with `commitMode: github-api`
+
+  There was a race-condition that means sometimes existing PRs would not be found,
+  and new PRs would be opened. This has now been fixed by fetching existing PRs
+  before making any changes.
+
+- [#486](https://github.com/changesets/action/pull/486) [`7ed1955`](https://github.com/changesets/action/commit/7ed195554624ebd75c08aa477b53110f61cc78f7) Thanks [@s0](https://github.com/s0)! - Fixed situations in which `cwd` was specified as a relative path and used with (default) `commitMode: git-cli`
+
+- [#461](https://github.com/changesets/action/pull/461) [`e9c36b6`](https://github.com/changesets/action/commit/e9c36b696406360bf04204ad32e3dcf3ad752b77) Thanks [@nayounsang](https://github.com/nayounsang)! - Avoid hitting a deprecation warning when encountering errors from `@octokit/request-error`
+
+## 1.5.2
+
+### Patch Changes
+
+- [#473](https://github.com/changesets/action/pull/473) [`3c24abe`](https://github.com/changesets/action/commit/3c24abeab26da6335c181222faa2ea485a092cf8) Thanks [@s0](https://github.com/s0)! - Make git add work consistently with subdirectories
+
+  Ensure that when running the action from a subdirectory of a repository,
+  only the files from that directory are added, regardless of `commitMode`.
+
+## 1.5.1
+
+### Patch Changes
+
+- [#471](https://github.com/changesets/action/pull/471) [`15ab130`](https://github.com/changesets/action/commit/15ab1306067a396fa9ba7ad363e8a041d457782a) Thanks [@h3rmanj](https://github.com/h3rmanj)! - Bump `@changesets/ghcommit` to v1.4.0, which fixes an issue running this action in monorepos with `commitMode: github-api`
+
+- [#467](https://github.com/changesets/action/pull/467) [`6e57550`](https://github.com/changesets/action/commit/6e575506e63f9e69e475d3eccfdd61b448efc8ae) Thanks [@Vx-V](https://github.com/Vx-V)! - Avoid searching for an existing pull request early.
+
+## 1.5.0
+
+### Minor Changes
+
+- [#391](https://github.com/changesets/action/pull/391) [`207dc3d`](https://github.com/changesets/action/commit/207dc3da2d1907cae0454ce123935401332be72b) Thanks [@s0](https://github.com/s0)! - Introduce a new input `commitMode` that allows using the GitHub API for pushing tags and commits instead of the Git CLI.
+
+  When used with `"github-api"` value all tags and commits will be attributed to the user whose GITHUB_TOKEN is used, and also signed using GitHub's internal GPG key.
+
+## 1.4.10
+
+### Patch Changes
+
+- [#448](https://github.com/changesets/action/pull/448) [`8b16070`](https://github.com/changesets/action/commit/8b16070fe386eed3456c83eeed9460160432cf26) Thanks [@bluwy](https://github.com/bluwy)! - Use full git email (`41898282+github-actions[bot]@users.noreply.github.com`) for github-actions bot when making commits
+
+## 1.4.9
+
+### Patch Changes
+
+- [#415](https://github.com/changesets/action/pull/415) [`57ab80c`](https://github.com/changesets/action/commit/57ab80c61104c270bebc125910ae32da3a5aca46) Thanks [@benmccann](https://github.com/benmccann)! - Improve error message when attempting to publish without publish script defined
+
+## 1.4.8
+
+### Patch Changes
+
+- [#393](https://github.com/changesets/action/pull/393) [`48ab0d2`](https://github.com/changesets/action/commit/48ab0d2f2e77ae169182d022591ef5c18c931ff2) Thanks [@s0](https://github.com/s0)! - Ensure the PR remains open when updated
+
+- [#393](https://github.com/changesets/action/pull/393) [`48ab0d2`](https://github.com/changesets/action/commit/48ab0d2f2e77ae169182d022591ef5c18c931ff2) Thanks [@s0](https://github.com/s0)! - Switch to cheaper API for querying existing PRs
+
+## 1.4.7
+
+### Patch Changes
+
+- [#255](https://github.com/changesets/action/pull/255) [`f2660aa`](https://github.com/changesets/action/commit/f2660aa7e78365f53dbeb4cfa774c1499ec6483a) Thanks [@ernestognw](https://github.com/ernestognw)! - Allow customize PR `branch` field
+
+## 1.4.6
+
+### Patch Changes
+
+- [#350](https://github.com/changesets/action/pull/350) [`9385be9`](https://github.com/changesets/action/commit/9385be9e757839189ea5ee63ec4e3caa8a6ca71b) Thanks [@m-shaka](https://github.com/m-shaka)! - Bump the used node.js from 16 to 20
+
+## 1.4.5
+
+### Patch Changes
+
+- [#282](https://github.com/changesets/action/pull/282) [`eb19e25`](https://github.com/changesets/action/commit/eb19e25e7797cf33dc2de4caa071e85a8057a0f0) Thanks [@mark-omarov](https://github.com/mark-omarov)! - Updated a few dependencies to patch the security vulnerabilities that were reported for their older versions.
+
+## 1.4.4
+
+### Patch Changes
+
+- [#291](https://github.com/changesets/action/pull/291) [`db8a109`](https://github.com/changesets/action/commit/db8a1099bc0ba1dd6f46a5b9df4212e4f69e78c9) Thanks [@varl](https://github.com/varl)! - Wire up [`@octokit/plugin-throttling`](https://github.com/octokit/plugin-throttling.js) with all GitHub Octokit instances
+
+## 1.4.3
+
+### Patch Changes
+
+- [#289](https://github.com/changesets/action/pull/289) [`8b28186`](https://github.com/changesets/action/commit/8b2818674de86a7fc69aebb9ed6b486ee32eb96e) Thanks [@varl](https://github.com/varl)! - Use logging provided by `@actions/core`
+
+## 1.4.2
+
+### Patch Changes
+
+- [#286](https://github.com/changesets/action/pull/286) [`225a1e8`](https://github.com/changesets/action/commit/225a1e8cbcabb7b585174ba0ad806549db40d4cd) Thanks [@varl](https://github.com/varl)! - This patch implements the [`@octokit/plugin-throttling`](https://github.com/octokit/plugin-throttling.js) plugin and [wires
+  it up with the internal GitHub Octokit instance](https://github.com/actions/toolkit/tree/457303960f03375db6f033e214b9f90d79c3fe5c/packages/github#extending-the-octokit-instance).
+
+  This plugin is recommended by [the Octokit docs](://octokit.github.io/rest.js/v19#throttling) as it implements all the GitHub [best practices for integrators](https://docs.github.com/en/rest/guides/best-practices-for-integrators?apiVersion=2022-11-28).
+
+  This should help with `changesets/action` gitting spurious secondary rate limits and failing CI jobs, for which the only known workaround is to simply re-run the job.
+
+## 1.4.1
+
+### Patch Changes
+
+- [#123](https://github.com/changesets/action/pull/123) [`b78f480`](https://github.com/changesets/action/commit/b78f48099899f0a853c5d9cd3feb21a5440babbd) Thanks [@Andarist](https://github.com/Andarist)! - Updated `@actions/*` dependencies to avoid using deprecated features of the runner.
+
+## 1.4.0
+
+### Minor Changes
+
+- [#216](https://github.com/changesets/action/pull/216) [`398d7ed`](https://github.com/changesets/action/commit/398d7ed) Thanks [@quinnjn](https://github.com/quinnjn)! - Execute action with node16 instead of node12.
+
+### Patch Changes
+
+- [#228](https://github.com/changesets/action/pull/228) [`bff53cc`](https://github.com/changesets/action/commit/bff53cc50c1ebb33f8f558f9de2e0eb9a99230c6) Thanks [@iansan5653](https://github.com/iansan5653)! - Add `is:pull-request` to search query when looking for existing PR. This fixes an issue with user-owned PATs.
+
+* [#206](https://github.com/changesets/action/pull/206) [`8c3f5f5`](https://github.com/changesets/action/commit/8c3f5f5637a95a2327e78d5dabcf357978aedcbb) Thanks [@glasser](https://github.com/glasser)! - Skip creating a PR when all existing changesets are empty.
+
+## 1.3.0
 
 ### Minor Changes
 
 - [#167](https://github.com/changesets/action/pull/167) [`993a0a0`](https://github.com/changesets/action/commit/993a0a090df78cee07481d3886dcd8b29deb9567) Thanks [@dmregister](https://github.com/dmregister)! - Added `pullRequestNumber` to the action's outputs
+
+### Patch Changes
+
+- [#157](https://github.com/changesets/action/pull/157) [`521c27b`](https://github.com/changesets/action/commit/521c27bf86ec53547d6a350d208fbbbc9d576fbc) Thanks [@emmenko](https://github.com/emmenko)! - Automatically adjust GitHub PR message if it exceeds a size limit of 60k characters by omitting some of the changelog information.
 
 ## 1.2.2
 
