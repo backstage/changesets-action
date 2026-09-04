@@ -33,9 +33,9 @@ process.chdir(path.join(import.meta.dirname, ".."));
 
   await exec("git", [
     "push",
-    "--force",
-    "--follow-tags",
+    "--atomic",
     "origin",
-    `HEAD:refs/heads/${releaseLine}`,
+    `+HEAD:refs/heads/${releaseLine}`,
+    `refs/tags/${tag}`,
   ]);
 })();

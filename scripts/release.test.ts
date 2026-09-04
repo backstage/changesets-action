@@ -23,10 +23,10 @@ test("publishes an already-built v3 release to the v3 release line", async () =>
     ]);
     expect(git.exec).toHaveBeenCalledWith("git", [
       "push",
-      "--force",
-      "--follow-tags",
+      "--atomic",
       "origin",
-      "HEAD:refs/heads/v3",
+      "+HEAD:refs/heads/v3",
+      "refs/tags/v3.0.0",
     ]);
   });
 });
