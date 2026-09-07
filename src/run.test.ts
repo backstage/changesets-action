@@ -1,12 +1,13 @@
-import fixturez from "fixturez";
-import * as github from "@actions/github";
-import fs from "fs-extra";
-import path from "path";
+import path from "node:path";
+import type { Changeset } from "@changesets/types";
 import writeChangeset from "@changesets/write";
-import { Changeset } from "@changesets/types";
-import { runVersion } from "./run";
+import { createFixture } from "fs-fixture";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Git } from "./git.ts";
+import { setupOctokit } from "./octokit.ts";
+import { runVersion } from "./run.ts";
 
-jest.mock("@actions/github", () => ({
+vi.mock("@actions/github", () => ({
   context: {
     repo: {
       owner: "changesets",
@@ -15,108 +16,240 @@ jest.mock("@actions/github", () => ({
     ref: "refs/heads/some-branch",
     sha: "xeac7",
   },
-  getOctokit: jest.fn(),
+  getOctokit: () => ({
+    rest: mockedGithubMethods,
+    graphql: mockedGraphql,
+  }),
 }));
-jest.mock("./gitUtils");
+vi.mock("./git.ts");
+vi.mock("@changesets/ghcommit/git");
 
 let mockedGithubMethods = {
-  search: {
-    issuesAndPullRequests: jest.fn(),
-  },
   pulls: {
-    create: jest.fn(),
+    create: vi.fn(),
+    list: vi.fn(),
   },
   repos: {
-    createRelease: jest.fn(),
+    createRelease: vi.fn(),
   },
 };
-(github.getOctokit as any).mockImplementation(() => mockedGithubMethods);
+let mockedGraphql = vi.fn();
 
-let f = fixturez(__dirname);
+const nodeModulesDir = path.join(import.meta.dirname, "..", "node_modules");
 
-const linkNodeModules = async (cwd: string) => {
-  await fs.symlink(
-    path.join(__dirname, "..", "node_modules"),
-    path.join(cwd, "node_modules")
-  );
-};
+function createSimpleProjectFixture() {
+  return createFixture({
+    node_modules: (api) => api.symlink(nodeModulesDir),
+    ".changeset/config.json": JSON.stringify({}),
+    "packages/pkg-a/package.json": JSON.stringify({
+      name: "changesets-dev-simple-project-pkg-a",
+      version: "1.0.0",
+      dependencies: {
+        "changesets-dev-simple-project-pkg-b": "1.0.0",
+      },
+    }),
+    "packages/pkg-b/package.json": JSON.stringify({
+      name: "changesets-dev-simple-project-pkg-b",
+      version: "1.0.0",
+    }),
+    "package.json": JSON.stringify({
+      name: "simple-project",
+      version: "1.0.0",
+      private: true,
+      workspaces: ["packages/*"],
+    }),
+  });
+}
+
+function createIgnoredPackageFixture() {
+  return createFixture({
+    node_modules: (api) => api.symlink(nodeModulesDir),
+    ".changeset/config.json": JSON.stringify({
+      ignore: ["changesets-dev-ignored-package-pkg-a"],
+    }),
+    "packages/pkg-a/package.json": JSON.stringify({
+      name: "changesets-dev-ignored-package-pkg-a",
+      version: "1.0.0",
+      dependencies: {
+        "changesets-dev-ignored-package-pkg-b": "1.0.0",
+      },
+    }),
+    "packages/pkg-b/package.json": JSON.stringify({
+      name: "changesets-dev-ignored-package-pkg-b",
+      version: "1.0.0",
+    }),
+    "package.json": JSON.stringify({
+      name: "ignored-package",
+      version: "1.0.0",
+      private: true,
+      workspaces: ["packages/*"],
+    }),
+  });
+}
+
 const writeChangesets = (changesets: Changeset[], cwd: string) => {
   return Promise.all(changesets.map((commit) => writeChangeset(commit, cwd)));
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe("version", () => {
   it("creates simple PR", async () => {
-    let cwd = f.copy("simple-project");
-    linkNodeModules(cwd);
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
 
-    mockedGithubMethods.search.issuesAndPullRequests.mockImplementationOnce(
-      () => ({ data: { items: [] } })
-    );
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
 
-    mockedGithubMethods.pulls.create.mockImplementationOnce(
-      () => ({ data: { number: 123 } })
-    );
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
 
     await writeChangesets(
       [
         {
           releases: [
             {
-              name: "simple-project-pkg-a",
+              name: "changesets-dev-simple-project-pkg-a",
               type: "minor",
             },
             {
-              name: "simple-project-pkg-b",
+              name: "changesets-dev-simple-project-pkg-b",
               type: "minor",
             },
           ],
           summary: "Awesome feature",
         },
       ],
-      cwd
+      cwd,
     );
 
     await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
       githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
       cwd,
     });
 
     expect(mockedGithubMethods.pulls.create.mock.calls[0]).toMatchSnapshot();
   });
 
-  it("only includes bumped packages in the PR body", async () => {
-    let cwd = f.copy("simple-project");
-    linkNodeModules(cwd);
+  it("creates the PR from a custom version branch", async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+    const git = new Git({ cwd });
 
-    mockedGithubMethods.search.issuesAndPullRequests.mockImplementationOnce(
-      () => ({ data: { items: [] } })
-    );
-
-    mockedGithubMethods.pulls.create.mockImplementationOnce(
-      () => ({ data: { number: 123 } })
-    );
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
 
     await writeChangesets(
       [
         {
           releases: [
             {
-              name: "simple-project-pkg-a",
+              name: "changesets-dev-simple-project-pkg-a",
               type: "minor",
             },
           ],
           summary: "Awesome feature",
         },
       ],
-      cwd
+      cwd,
     );
 
     await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
       githubToken: "@@GITHUB_TOKEN",
+      git,
+      cwd,
+      versionBranch: "changesets-release/custom-workspace",
+    });
+
+    expect(git.prepareBranch).toHaveBeenCalledWith(
+      "changesets-release/custom-workspace",
+    );
+    expect(mockedGithubMethods.pulls.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        base: "some-branch",
+        head: "changesets:changesets-release/custom-workspace",
+      }),
+    );
+    expect(mockedGithubMethods.pulls.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        base: "some-branch",
+        head: "changesets-release/custom-workspace",
+      }),
+    );
+  });
+
+  it('creates a draft PR when prDraft is "create"', async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
+
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: "Awesome feature",
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
+      cwd,
+      prDraft: "create",
+    });
+
+    expect(mockedGithubMethods.pulls.create.mock.calls[0]).toMatchSnapshot();
+  });
+
+  it("only includes bumped packages in the PR body", async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
+
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: "Awesome feature",
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
       cwd,
     });
 
@@ -124,37 +257,223 @@ describe("version", () => {
   });
 
   it("doesn't include ignored package that got a dependency update in the PR body", async () => {
-    let cwd = f.copy("ignored-package");
-    linkNodeModules(cwd);
+    await using fixture = await createIgnoredPackageFixture();
+    const cwd = fixture.path;
 
-    mockedGithubMethods.search.issuesAndPullRequests.mockImplementationOnce(
-      () => ({ data: { items: [] } })
-    );
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
 
-    mockedGithubMethods.pulls.create.mockImplementationOnce(
-      () => ({ data: { number: 123 } })
-    );
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
 
     await writeChangesets(
       [
         {
           releases: [
             {
-              name: "ignored-package-pkg-b",
+              name: "changesets-dev-ignored-package-pkg-b",
               type: "minor",
             },
           ],
           summary: "Awesome feature",
         },
       ],
-      cwd
+      cwd,
     );
 
     await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
       githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
       cwd,
     });
 
     expect(mockedGithubMethods.pulls.create.mock.calls[0]).toMatchSnapshot();
+  });
+
+  it("does not include changelog entries if full message exceeds size limit", async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
+
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: `# Non manus superum
+
+## Nec cornibus aequa numinis multo onerosior adde
+
+Lorem markdownum undas consumpserat malas, nec est lupus; memorant gentisque ab
+limine auctore. Eatque et promptu deficit, quam videtur aequa est **faciat**,
+locus. Potentia deus habebat pia quam qui coniuge frater, tibi habent fertque
+viribus. E et cognoscere arcus, lacus aut sic pro crimina fuit tum **auxilium**
+dictis, qua, in.
+
+In modo. Nomen illa membra.
+
+> Corpora gratissima parens montibus tum coeperat qua remulus caelum Helenamque?
+> Non poenae modulatur Amathunta in concita superi, procerum pariter rapto cornu
+> munera. Perrhaebum parvo manus contingere, morari, spes per totiens ut
+> dividite proculcat facit, visa.
+
+Adspicit sequitur diffamatamque superi Phoebo qua quin lammina utque: per? Exit
+decus aut hac inpia, seducta mirantia extremo. Vidi pedes vetus. Saturnius
+fluminis divesque vulnere aquis parce lapsis rabie si visa fulmineis.
+`,
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
+      cwd,
+      prBodyMaxCharacters: 1000,
+    });
+
+    expect(mockedGithubMethods.pulls.create.mock.calls[0]).toMatchSnapshot();
+    expect(mockedGithubMethods.pulls.create.mock.calls[0][0].body).toMatch(
+      /The changelog information of each package has been omitted from this message/,
+    );
+  });
+
+  it("does not include any release information if a message with simplified release info exceeds size limit", async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({ data: [] }));
+
+    mockedGithubMethods.pulls.create.mockImplementationOnce(() => ({
+      data: { number: 123 },
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: `# Non manus superum
+
+## Nec cornibus aequa numinis multo onerosior adde
+
+Lorem markdownum undas consumpserat malas, nec est lupus; memorant gentisque ab
+limine auctore. Eatque et promptu deficit, quam videtur aequa est **faciat**,
+locus. Potentia deus habebat pia quam qui coniuge frater, tibi habent fertque
+viribus. E et cognoscere arcus, lacus aut sic pro crimina fuit tum **auxilium**
+dictis, qua, in.
+
+In modo. Nomen illa membra.
+
+> Corpora gratissima parens montibus tum coeperat qua remulus caelum Helenamque?
+> Non poenae modulatur Amathunta in concita superi, procerum pariter rapto cornu
+> munera. Perrhaebum parvo manus contingere, morari, spes per totiens ut
+> dividite proculcat facit, visa.
+
+Adspicit sequitur diffamatamque superi Phoebo qua quin lammina utque: per? Exit
+decus aut hac inpia, seducta mirantia extremo. Vidi pedes vetus. Saturnius
+fluminis divesque vulnere aquis parce lapsis rabie si visa fulmineis.
+`,
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
+      cwd,
+      prBodyMaxCharacters: 500,
+    });
+
+    expect(mockedGithubMethods.pulls.create.mock.calls[0]).toMatchSnapshot();
+    expect(mockedGithubMethods.pulls.create.mock.calls[0][0].body).toMatch(
+      /All release information have been omitted from this message, as the content exceeds the size limit/,
+    );
+  });
+
+  it('updates an existing PR via GraphQL without converting it to draft when prDraft is "create"', async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({
+      data: [{ number: 123, node_id: "PR_kwDOA" }],
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: "Awesome feature",
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
+      cwd,
+      prDraft: "create",
+    });
+
+    expect(mockedGraphql.mock.calls[0]).toMatchSnapshot();
+  });
+
+  it('updates an existing PR via GraphQL and converts it to draft when prDraft is "always"', async () => {
+    await using fixture = await createSimpleProjectFixture();
+    const cwd = fixture.path;
+
+    mockedGithubMethods.pulls.list.mockImplementationOnce(() => ({
+      data: [{ number: 123, node_id: "PR_kwDOA" }],
+    }));
+
+    await writeChangesets(
+      [
+        {
+          releases: [
+            {
+              name: "changesets-dev-simple-project-pkg-a",
+              type: "minor",
+            },
+          ],
+          summary: "Awesome feature",
+        },
+      ],
+      cwd,
+    );
+
+    await runVersion({
+      octokit: setupOctokit("@@GITHUB_TOKEN"),
+      githubToken: "@@GITHUB_TOKEN",
+      git: new Git({ cwd }),
+      cwd,
+      prDraft: "always",
+    });
+
+    expect(mockedGraphql.mock.calls[0]).toMatchSnapshot();
   });
 });
